@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import {
   Button,
-  SegmentedButtons,
+  IconButton,
+  Menu,
   Surface,
   Text,
   TextInput as PaperTextInput,
@@ -39,7 +40,6 @@ interface HomePalette {
   secondaryBtnBg: string;
   secondaryBtnBorder: string;
   secondaryBtnText: string;
-  segmentedBg: string;
 }
 
 const LIGHT_COLORS: HomePalette = {
@@ -58,7 +58,6 @@ const LIGHT_COLORS: HomePalette = {
   secondaryBtnBg: "#ecfaf5",
   secondaryBtnBorder: "#bde3d8",
   secondaryBtnText: "#1f8f8b",
-  segmentedBg: "#fff2e7",
 };
 
 const DARK_COLORS: HomePalette = {
@@ -77,7 +76,6 @@ const DARK_COLORS: HomePalette = {
   secondaryBtnBg: "#1a2d3b",
   secondaryBtnBorder: "#32536a",
   secondaryBtnText: "#79e1d9",
-  segmentedBg: "#1a2a3c",
 };
 
 export default function HomeScreen({ navigation }: Props) {
@@ -87,6 +85,8 @@ export default function HomeScreen({ navigation }: Props) {
   const colors = mode === "dark" ? DARK_COLORS : LIGHT_COLORS;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [name, setName] = useState("");
+  const [modeMenuVisible, setModeMenuVisible] = useState(false);
+  const [languageMenuVisible, setLanguageMenuVisible] = useState(false);
   const heroOpacity = useRef(new Animated.Value(0)).current;
   const heroShift = useRef(new Animated.Value(14)).current;
   const panelOpacity = useRef(new Animated.Value(0)).current;
@@ -155,6 +155,76 @@ export default function HomeScreen({ navigation }: Props) {
       <View style={styles.bgBlobTop} />
       <View style={styles.bgBlobBottom} />
 
+      <View style={styles.topRightActions}>
+        <Menu
+          visible={modeMenuVisible}
+          onDismiss={() => setModeMenuVisible(false)}
+          anchor={
+            <IconButton
+              icon={mode === "dark" ? "weather-night" : "white-balance-sunny"}
+              size={25}
+              onPress={() => setModeMenuVisible(true)}
+              style={[styles.actionIconButton, styles.modeActionButton]}
+              iconColor="#ffffff"
+              accessibilityLabel={strings.modeLabel}
+            />
+          }
+          contentStyle={styles.dropdownMenu}
+        >
+          <Menu.Item
+            onPress={() => {
+              setMode("light");
+              setModeMenuVisible(false);
+            }}
+            title={strings.modeLight}
+            leadingIcon="white-balance-sunny"
+          />
+          <Menu.Item
+            onPress={() => {
+              setMode("dark");
+              setModeMenuVisible(false);
+            }}
+            title={strings.modeDark}
+            leadingIcon="weather-night"
+          />
+        </Menu>
+
+        <Menu
+          visible={languageMenuVisible}
+          onDismiss={() => setLanguageMenuVisible(false)}
+          anchor={
+            <IconButton
+              icon="translate"
+              size={25}
+              onPress={() => setLanguageMenuVisible(true)}
+              style={[
+                styles.actionIconButton,
+                styles.secondaryActionButton,
+                styles.languageActionButton,
+              ]}
+              iconColor="#ffffff"
+              accessibilityLabel={strings.languageLabel}
+            />
+          }
+          contentStyle={styles.dropdownMenu}
+        >
+          <Menu.Item
+            onPress={() => {
+              setLanguage("en");
+              setLanguageMenuVisible(false);
+            }}
+            title={strings.languageEnglish}
+          />
+          <Menu.Item
+            onPress={() => {
+              setLanguage("th");
+              setLanguageMenuVisible(false);
+            }}
+            title={strings.languageThai}
+          />
+        </Menu>
+      </View>
+
       <Animated.View
         style={[
           styles.hero,
@@ -181,48 +251,6 @@ export default function HomeScreen({ navigation }: Props) {
         ]}
       >
         <Surface style={styles.panelSurface} elevation={4}>
-          <View style={styles.segmentGroup}>
-            <Text style={styles.modeLabel}>{strings.modeLabel}</Text>
-            <SegmentedButtons
-              value={mode}
-              onValueChange={(value) => setMode(value as "light" | "dark")}
-              style={styles.segmented}
-              buttons={[
-                {
-                  value: "light",
-                  label: strings.modeLight,
-                },
-                {
-                  value: "dark",
-                  label: strings.modeDark,
-                },
-              ]}
-              theme={panelTheme}
-              density="small"
-            />
-          </View>
-
-          <View style={styles.segmentGroup}>
-            <Text style={styles.modeLabel}>{strings.languageLabel}</Text>
-            <SegmentedButtons
-              value={language}
-              onValueChange={(value) => setLanguage(value as "en" | "th")}
-              style={styles.segmented}
-              buttons={[
-                {
-                  value: "en",
-                  label: strings.languageEnglish,
-                },
-                {
-                  value: "th",
-                  label: strings.languageThai,
-                },
-              ]}
-              theme={panelTheme}
-              density="small"
-            />
-          </View>
-
           <PaperTextInput
             mode="outlined"
             label={strings.nameLabel}
@@ -293,6 +321,42 @@ function createStyles(colors: HomePalette) {
       bottom: -90,
       left: -70,
     },
+    topRightActions: {
+      position: "absolute",
+      top: Platform.OS === "ios" ? 50 : 16,
+      right: 16,
+      zIndex: 10,
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    actionIconButton: {
+      margin: 0,
+      width: 48,
+      height: 48,
+      borderRadius: 999,
+      borderWidth: 2,
+      borderColor: colors.card,
+      shadowColor: colors.panelShadow,
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 8,
+    },
+    modeActionButton: {
+      backgroundColor: colors.primary,
+    },
+    secondaryActionButton: {
+      marginLeft: 8,
+    },
+    languageActionButton: {
+      backgroundColor: colors.secondary,
+    },
+    dropdownMenu: {
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.cardBorder,
+    },
     hero: {
       marginBottom: 22,
     },
@@ -330,19 +394,6 @@ function createStyles(colors: HomePalette) {
       shadowRadius: 20,
       shadowOffset: { width: 0, height: 8 },
       elevation: 4,
-    },
-    segmentGroup: {
-      marginBottom: 14,
-    },
-    modeLabel: {
-      color: colors.text,
-      fontSize: 13,
-      fontFamily: FONT.heading,
-      marginBottom: 8,
-    },
-    segmented: {
-      backgroundColor: colors.segmentedBg,
-      borderRadius: 999,
     },
     input: {
       width: "100%",

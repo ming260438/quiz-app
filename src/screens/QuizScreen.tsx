@@ -10,7 +10,6 @@ import {
 import {
   Button,
   Chip,
-  ProgressBar,
   Surface,
   Text,
   TouchableRipple,
@@ -35,6 +34,8 @@ interface QuizPalette {
   card: string;
   border: string;
   track: string;
+  progressFill: string;
+  progressBorder: string;
   success: string;
   successBorder: string;
   danger: string;
@@ -57,7 +58,9 @@ const LIGHT_COLORS: QuizPalette = {
   primarySoft: "#ffe3d6",
   card: "#ffffff",
   border: "#f0dfcc",
-  track: "#f6e7d8",
+  track: "#f3d1bb",
+  progressFill: "#ff5f3c",
+  progressBorder: "#e3b89f",
   success: "#dcf7e7",
   successBorder: "#2f9e62",
   danger: "#ffe3dd",
@@ -80,7 +83,9 @@ const DARK_COLORS: QuizPalette = {
   primarySoft: "#2d2521",
   card: "#152234",
   border: "#2a3a51",
-  track: "#233246",
+  track: "#2e4560",
+  progressFill: "#ff9b7a",
+  progressBorder: "#4a6788",
   success: "#1f3d32",
   successBorder: "#39b87d",
   danger: "#432627",
@@ -121,7 +126,9 @@ export default function QuizScreen({ route, navigation }: Props) {
 
   const question = shuffledQuestions[currentIndex];
   const total = shuffledQuestions.length;
-  const progress = (currentIndex + 1) / total;
+  const progress = total > 0 ? (currentIndex + 1) / total : 0;
+  const progressPercent = Math.round(Math.max(0, Math.min(progress, 1)) * 100);
+  const progressWidth = `${progressPercent}%` as `${number}%`;
 
   useEffect(() => {
     questionOpacity.setValue(0);
@@ -216,12 +223,21 @@ export default function QuizScreen({ route, navigation }: Props) {
           >
             {strings.quizQuestionPrefix} {currentIndex + 1} / {total}
           </Chip>
-          <Text style={styles.playerLabel}>
-            {strings.quizPlayerPrefix}: {playerName}
-          </Text>
+          <View style={styles.playerBadge}>
+            <Text style={styles.playerLabel}>{strings.quizPlayerPrefix}</Text>
+            <Text style={styles.playerName} numberOfLines={1}>
+              {playerName}
+            </Text>
+          </View>
         </View>
 
-        <ProgressBar progress={progress} color={colors.primary} style={styles.progressBg} />
+        <View
+          style={styles.progressBg}
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: 100, now: progressPercent }}
+        >
+          <View style={[styles.progressFill, { width: progressWidth }]} />
+        </View>
 
         <Animated.View
           style={[
@@ -241,20 +257,20 @@ export default function QuizScreen({ route, navigation }: Props) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.optionsContainer}
         >
-          {question.options.map((option, idx) => (
-            <TouchableRipple
-              key={`${question.id}-${idx}`}
-              style={getOptionStyle(option)}
-              onPress={() => handleSelect(option)}
-              disabled={answered}
-              borderless={false}
-            >
-              <View style={styles.optionInner}>
-                <Text style={styles.optionPrefix}>{String.fromCharCode(65 + idx)}</Text>
-                <Text style={getOptionTextStyle(option)}>{option.text[language]}</Text>
-              </View>
-            </TouchableRipple>
-          ))}
+            {question.options.map((option, idx) => (
+              <TouchableRipple
+                key={`${question.id}-${idx}`}
+                style={getOptionStyle(option)}
+                onPress={() => handleSelect(option)}
+                disabled={answered}
+                borderless={false}
+              >
+                <View style={styles.optionInner}>
+                  <Text style={styles.optionPrefix}>{String.fromCharCode(65 + idx)}</Text>
+                  <Text style={getOptionTextStyle(option)}>{option.text[language]}</Text>
+                </View>
+              </TouchableRipple>
+            ))}
         </ScrollView>
 
         {answered && (
@@ -324,16 +340,51 @@ function createStyles(colors: QuizPalette) {
       fontFamily: FONT.heading,
     },
     progressBg: {
-      height: 8,
+      height: 10,
       backgroundColor: colors.track,
-      borderRadius: 10,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.progressBorder,
       marginBottom: 18,
       overflow: "hidden",
+      shadowColor: colors.cardShadow,
+      shadowOpacity: 0.16,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+    },
+    progressFill: {
+      borderRadius: 10,
+      height: "100%",
+      backgroundColor: colors.progressFill,
     },
     playerLabel: {
       color: colors.muted,
-      fontSize: 13,
+      fontSize: 12,
       fontFamily: FONT.body,
+    },
+    playerBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.card,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      maxWidth: "68%",
+      shadowColor: colors.cardShadow,
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 1,
+    },
+    playerName: {
+      color: colors.text,
+      fontSize: 13,
+      marginLeft: 6,
+      fontFamily: FONT.heading,
+      flexShrink: 1,
     },
     card: {
       backgroundColor: colors.card,
